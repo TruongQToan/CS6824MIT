@@ -55,29 +55,36 @@ func TestReElection2A(t *testing.T) {
 	cfg.begin("Test (2A): election after network failure")
 
 	leader1 := cfg.checkOneLeader()
+	fmt.Println("leader 1", leader1)
 
 	// if the leader disconnects, a new one should be elected.
 	cfg.disconnect(leader1)
+	fmt.Println("checking disconnect 1")
 	cfg.checkOneLeader()
 
 	// if the old leader rejoins, that shouldn't
 	// disturb the new leader.
 	cfg.connect(leader1)
+	fmt.Println("leader", leader1, "connected", cfg.connected[leader1])
 	leader2 := cfg.checkOneLeader()
+	fmt.Println("leader 2", leader2)
 
 	// if there's no quorum, no leader should
 	// be elected.
 	cfg.disconnect(leader2)
+	fmt.Println("leader", leader2, "disconnected")
 	cfg.disconnect((leader2 + 1) % servers)
 	time.Sleep(2 * RaftElectionTimeout)
 	cfg.checkNoLeader()
 
 	// if a quorum arises, it should elect a leader.
 	cfg.connect((leader2 + 1) % servers)
+	fmt.Println("checking a quorum", leader2)
 	cfg.checkOneLeader()
 
 	// re-join of last node shouldn't prevent leader from existing.
 	cfg.connect(leader2)
+	fmt.Println("checking rejoin", leader2)
 	cfg.checkOneLeader()
 
 	cfg.end()
@@ -129,9 +136,11 @@ func TestFailAgree2B(t *testing.T) {
 	// re-connect
 	cfg.connect((leader + 1) % servers)
 
+	fmt.Println("RECONNECT", (leader + 1) % servers)
 	// agree with full set of servers?
 	cfg.one(106, servers, true)
 	time.Sleep(RaftElectionTimeout)
+	fmt.Println("start send 107")
 	cfg.one(107, servers, true)
 
 	cfg.end()
@@ -302,6 +311,7 @@ func TestRejoin2B(t *testing.T) {
 	leader1 := cfg.checkOneLeader()
 	cfg.disconnect(leader1)
 
+	fmt.Println("DISCONNECT", leader1)
 	// make old leader try to agree on some entries
 	cfg.rafts[leader1].Start(102)
 	cfg.rafts[leader1].Start(103)
@@ -314,13 +324,16 @@ func TestRejoin2B(t *testing.T) {
 	leader2 := cfg.checkOneLeader()
 	cfg.disconnect(leader2)
 
+	fmt.Println("DISCONNECT", leader2)
 	// old leader connected again
 	cfg.connect(leader1)
+	fmt.Println("CONNECT", leader1)
 
 	cfg.one(104, 2, true)
 
 	// all together now
 	cfg.connect(leader2)
+	fmt.Println("CONNECT", leader2)
 
 	cfg.one(105, servers, true)
 

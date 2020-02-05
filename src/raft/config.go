@@ -439,6 +439,7 @@ func (cfg *config) one(cmd int, expectedServers int, retry bool) int {
 			cfg.mu.Unlock()
 			if rf != nil {
 				index1, _, ok := rf.Start(cmd)
+				fmt.Println("test send", cmd, "to", starts, index1, ok)
 				if ok {
 					index = index1
 					break
@@ -452,8 +453,11 @@ func (cfg *config) one(cmd int, expectedServers int, retry bool) int {
 			t1 := time.Now()
 			for time.Since(t1).Seconds() < 2 {
 				nd, cmd1 := cfg.nCommitted(index)
+				fmt.Println("nd", nd, "cmd", cmd1, "expected", expectedServers)
 				if nd > 0 && nd >= expectedServers {
 					// committed
+					a, ok := cmd1.(int)
+					fmt.Println("convert", cmd, a, ok)
 					if cmd2, ok := cmd1.(int); ok && cmd2 == cmd {
 						// and it was the command we submitted.
 						return index
@@ -462,12 +466,14 @@ func (cfg *config) one(cmd int, expectedServers int, retry bool) int {
 				time.Sleep(20 * time.Millisecond)
 			}
 			if retry == false {
+				fmt.Println("fatal error here 466")
 				cfg.t.Fatalf("one(%v) failed to reach agreement", cmd)
 			}
 		} else {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
+	fmt.Println("fatal error here 472")
 	cfg.t.Fatalf("one(%v) failed to reach agreement", cmd)
 	return -1
 }
